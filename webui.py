@@ -26,12 +26,12 @@ from cosyvoice.cli.cosyvoice import CosyVoice, CosyVoice2
 from cosyvoice.utils.file_utils import load_wav, logging
 from cosyvoice.utils.common import set_all_random_seed
 
-inference_mode_list = ['预训练音色', '3s极速复刻', '跨语种复刻', '自然语言控制']
-instruct_dict = {'预训练音色': '1. 选择预训练音色\n2. 点击生成音频按钮',
-                 '3s极速复刻': '1. 选择prompt音频文件，或录入prompt音频，注意不超过30s，若同时提供，优先选择prompt音频文件\n2. 输入prompt文本\n3. 点击生成音频按钮',
-                 '跨语种复刻': '1. 选择prompt音频文件，或录入prompt音频，注意不超过30s，若同时提供，优先选择prompt音频文件\n2. 点击生成音频按钮',
-                 '自然语言控制': '1. 选择预训练音色\n2. 输入instruct文本\n3. 点击生成音频按钮'}
-stream_mode_list = [('否', False), ('是', True)]
+inference_mode_list = ['사전 학습 음색', '3초 초고속 복제', '다국어 복제', '자연어 제어']
+instruct_dict = {'사전 학습 음색': '1. 사전 학습 음색 선택\n2. 오디오 생성 버튼 클릭',
+                 '3초 초고속 복제': '1. prompt 오디오 파일 선택 또는 prompt 오디오 녹음, 30초 이하 주의, 동시 제공 시 prompt 오디오 파일 우선 선택\n2. prompt 텍스트 입력\n3. 오디오 생성 버튼 클릭',
+                 '다국어 복제': '1. prompt 오디오 파일 선택 또는 prompt 오디오 녹음, 30초 이하 주의, 동시 제공 시 prompt 오디오 파일 우선 선택\n2. 오디오 생성 버튼 클릭',
+                 '자연어 제어': '1. 사전 학습 음색 선택\n2. instruct 텍스트 입력\n3. 오디오 생성 버튼 클릭'}
+stream_mode_list = [('아니오', False), ('예', True)]
 max_val = 0.8
 
 
@@ -67,62 +67,62 @@ def generate_audio(tts_text, mode_checkbox_group, sft_dropdown, prompt_text, pro
         prompt_wav = prompt_wav_record
     else:
         prompt_wav = None
-    # if instruct mode, please make sure that model is iic/CosyVoice-300M-Instruct and not cross_lingual mode
-    if mode_checkbox_group in ['自然语言控制']:
+    # instruct 모드인 경우, 모델이 iic/CosyVoice-300M-Instruct이고 cross_lingual 모드가 아닌지 확인
+    if mode_checkbox_group in ['자연어 제어']:
         if cosyvoice.instruct is False:
-            gr.Warning('您正在使用自然语言控制模式, {}模型不支持此模式, 请使用iic/CosyVoice-300M-Instruct模型'.format(args.model_dir))
+            gr.Warning('자연어 제어 모드를 사용 중입니다. {} 모델은 이 모드를 지원하지 않습니다. iic/CosyVoice-300M-Instruct 모델을 사용하세요.'.format(args.model_dir))
             yield (cosyvoice.sample_rate, default_data)
         if instruct_text == '':
-            gr.Warning('您正在使用自然语言控制模式, 请输入instruct文本')
+            gr.Warning('자연어 제어 모드를 사용 중입니다. instruct 텍스트를 입력하세요.')
             yield (cosyvoice.sample_rate, default_data)
         if prompt_wav is not None or prompt_text != '':
-            gr.Info('您正在使用自然语言控制模式, prompt音频/prompt文本会被忽略')
-    # if cross_lingual mode, please make sure that model is iic/CosyVoice-300M and tts_text prompt_text are different language
-    if mode_checkbox_group in ['跨语种复刻']:
+            gr.Info('자연어 제어 모드를 사용 중입니다. prompt 오디오/prompt 텍스트는 무시됩니다.')
+    # cross_lingual 모드인 경우, 모델이 iic/CosyVoice-300M이고 tts_text와 prompt_text가 다른 언어인지 확인
+    if mode_checkbox_group in ['다국어 복제']:
         if cosyvoice.instruct is True:
-            gr.Warning('您正在使用跨语种复刻模式, {}模型不支持此模式, 请使用iic/CosyVoice-300M模型'.format(args.model_dir))
+            gr.Warning('다국어 복제 모드를 사용 중입니다. {} 모델은 이 모드를 지원하지 않습니다. iic/CosyVoice-300M 모델을 사용하세요.'.format(args.model_dir))
             yield (cosyvoice.sample_rate, default_data)
         if instruct_text != '':
-            gr.Info('您正在使用跨语种复刻模式, instruct文本会被忽略')
+            gr.Info('다국어 복제 모드를 사용 중입니다. instruct 텍스트는 무시됩니다.')
         if prompt_wav is None:
-            gr.Warning('您正在使用跨语种复刻模式, 请提供prompt音频')
+            gr.Warning('다국어 복제 모드를 사용 중입니다. prompt 오디오를 제공하세요.')
             yield (cosyvoice.sample_rate, default_data)
-        gr.Info('您正在使用跨语种复刻模式, 请确保合成文本和prompt文本为不同语言')
-    # if in zero_shot cross_lingual, please make sure that prompt_text and prompt_wav meets requirements
-    if mode_checkbox_group in ['3s极速复刻', '跨语种复刻']:
+        gr.Info('다국어 복제 모드를 사용 중입니다. 합성 텍스트와 prompt 텍스트가 다른 언어인지 확인하세요.')
+    # zero_shot cross_lingual인 경우, prompt_text와 prompt_wav가 요구사항을 만족하는지 확인
+    if mode_checkbox_group in ['3초 초고속 복제', '다국어 복제']:
         if prompt_wav is None:
-            gr.Warning('prompt音频为空，您是否忘记输入prompt音频？')
+            gr.Warning('prompt 오디오가 비어있습니다. prompt 오디오를 입력하는 것을 잊으셨나요?')
             yield (cosyvoice.sample_rate, default_data)
         if torchaudio.info(prompt_wav).sample_rate < prompt_sr:
-            gr.Warning('prompt音频采样率{}低于{}'.format(torchaudio.info(prompt_wav).sample_rate, prompt_sr))
+            gr.Warning('prompt 오디오 샘플링 레이트 {}가 {}보다 낮습니다.'.format(torchaudio.info(prompt_wav).sample_rate, prompt_sr))
             yield (cosyvoice.sample_rate, default_data)
-    # sft mode only use sft_dropdown
-    if mode_checkbox_group in ['预训练音色']:
+    # sft 모드는 sft_dropdown만 사용
+    if mode_checkbox_group in ['사전 학습 음색']:
         if instruct_text != '' or prompt_wav is not None or prompt_text != '':
-            gr.Info('您正在使用预训练音色模式，prompt文本/prompt音频/instruct文本会被忽略！')
+            gr.Info('사전 학습 음색 모드를 사용 중입니다. prompt 텍스트/prompt 오디오/instruct 텍스트는 무시됩니다!')
         if sft_dropdown == '':
-            gr.Warning('没有可用的预训练音色！')
+            gr.Warning('사용 가능한 사전 학습 음색이 없습니다!')
             yield (cosyvoice.sample_rate, default_data)
-    # zero_shot mode only use prompt_wav prompt text
-    if mode_checkbox_group in ['3s极速复刻']:
+    # zero_shot 모드는 prompt_wav와 prompt 텍스트만 사용
+    if mode_checkbox_group in ['3초 초고속 복제']:
         if prompt_text == '':
-            gr.Warning('prompt文本为空，您是否忘记输入prompt文本？')
+            gr.Warning('prompt 텍스트가 비어있습니다. prompt 텍스트를 입력하는 것을 잊으셨나요?')
             yield (cosyvoice.sample_rate, default_data)
         if instruct_text != '':
-            gr.Info('您正在使用3s极速复刻模式，预训练音色/instruct文本会被忽略！')
+            gr.Info('3초 초고속 복제 모드를 사용 중입니다. 사전 학습 음색/instruct 텍스트는 무시됩니다!')
 
-    if mode_checkbox_group == '预训练音色':
+    if mode_checkbox_group == '사전 학습 음색':
         logging.info('get sft inference request')
         set_all_random_seed(seed)
         for i in cosyvoice.inference_sft(tts_text, sft_dropdown, stream=stream, speed=speed):
             yield (cosyvoice.sample_rate, i['tts_speech'].numpy().flatten())
-    elif mode_checkbox_group == '3s极速复刻':
+    elif mode_checkbox_group == '3초 초고속 복제':
         logging.info('get zero_shot inference request')
         prompt_speech_16k = postprocess(load_wav(prompt_wav, prompt_sr))
         set_all_random_seed(seed)
         for i in cosyvoice.inference_zero_shot(tts_text, prompt_text, prompt_speech_16k, stream=stream, speed=speed):
             yield (cosyvoice.sample_rate, i['tts_speech'].numpy().flatten())
-    elif mode_checkbox_group == '跨语种复刻':
+    elif mode_checkbox_group == '다국어 복제':
         logging.info('get cross_lingual inference request')
         prompt_speech_16k = postprocess(load_wav(prompt_wav, prompt_sr))
         set_all_random_seed(seed)
@@ -137,32 +137,32 @@ def generate_audio(tts_text, mode_checkbox_group, sft_dropdown, prompt_text, pro
 
 def main():
     with gr.Blocks() as demo:
-        gr.Markdown("### 代码库 [CosyVoice](https://github.com/FunAudioLLM/CosyVoice) \
-                    预训练模型 [CosyVoice-300M](https://www.modelscope.cn/models/iic/CosyVoice-300M) \
+        gr.Markdown("### 코드 저장소 [CosyVoice](https://github.com/FunAudioLLM/CosyVoice) \
+                    사전 학습 모델 [CosyVoice-300M](https://www.modelscope.cn/models/iic/CosyVoice-300M) \
                     [CosyVoice-300M-Instruct](https://www.modelscope.cn/models/iic/CosyVoice-300M-Instruct) \
                     [CosyVoice-300M-SFT](https://www.modelscope.cn/models/iic/CosyVoice-300M-SFT)")
-        gr.Markdown("#### 请输入需要合成的文本，选择推理模式，并按照提示步骤进行操作")
+        gr.Markdown("#### 합성할 텍스트를 입력하고, 추론 모드를 선택한 후 안내 단계에 따라 작업하세요.")
 
-        tts_text = gr.Textbox(label="输入合成文本", lines=1, value="我是通义实验室语音团队全新推出的生成式语音大模型，提供舒适自然的语音合成能力。")
+        tts_text = gr.Textbox(label="합성 텍스트 입력", lines=1, value="저는 통의 연구소 음성 팀이 새롭게 출시한 생성형 음성 대형 모델로, 편안하고 자연스러운 음성 합성 능력을 제공합니다.")
         with gr.Row():
-            mode_checkbox_group = gr.Radio(choices=inference_mode_list, label='选择推理模式', value=inference_mode_list[0])
-            instruction_text = gr.Text(label="操作步骤", value=instruct_dict[inference_mode_list[0]], scale=0.5)
-            sft_dropdown = gr.Dropdown(choices=sft_spk, label='选择预训练音色', value=sft_spk[0], scale=0.25)
-            stream = gr.Radio(choices=stream_mode_list, label='是否流式推理', value=stream_mode_list[0][1])
-            speed = gr.Number(value=1, label="速度调节(仅支持非流式推理)", minimum=0.5, maximum=2.0, step=0.1)
+            mode_checkbox_group = gr.Radio(choices=inference_mode_list, label='추론 모드 선택', value=inference_mode_list[0])
+            instruction_text = gr.Text(label="작업 단계", value=instruct_dict[inference_mode_list[0]], scale=0.5)
+            sft_dropdown = gr.Dropdown(choices=sft_spk, label='사전 학습 음색 선택', value=sft_spk[0], scale=0.25)
+            stream = gr.Radio(choices=stream_mode_list, label='스트리밍 추론 여부', value=stream_mode_list[0][1])
+            speed = gr.Number(value=1, label="속도 조절(비스트리밍 추론만 지원)", minimum=0.5, maximum=2.0, step=0.1)
             with gr.Column(scale=0.25):
                 seed_button = gr.Button(value="\U0001F3B2")
-                seed = gr.Number(value=0, label="随机推理种子")
+                seed = gr.Number(value=0, label="랜덤 추론 시드")
 
         with gr.Row():
-            prompt_wav_upload = gr.Audio(sources='upload', type='filepath', label='选择prompt音频文件，注意采样率不低于16khz')
-            prompt_wav_record = gr.Audio(sources='microphone', type='filepath', label='录制prompt音频文件')
-        prompt_text = gr.Textbox(label="输入prompt文本", lines=1, placeholder="请输入prompt文本，需与prompt音频内容一致，暂时不支持自动识别...", value='')
-        instruct_text = gr.Textbox(label="输入instruct文本", lines=1, placeholder="请输入instruct文本.", value='')
+            prompt_wav_upload = gr.Audio(sources='upload', type='filepath', label='prompt 오디오 파일 선택, 샘플링 레이트는 16khz 이상이어야 합니다')
+            prompt_wav_record = gr.Audio(sources='microphone', type='filepath', label='prompt 오디오 파일 녹음')
+        prompt_text = gr.Textbox(label="prompt 텍스트 입력", lines=1, placeholder="prompt 텍스트를 입력하세요. prompt 오디오 내용과 일치해야 하며, 자동 인식은 아직 지원하지 않습니다...", value='')
+        instruct_text = gr.Textbox(label="instruct 텍스트 입력", lines=1, placeholder="instruct 텍스트를 입력하세요.", value='')
 
-        generate_button = gr.Button("生成音频")
+        generate_button = gr.Button("오디오 생성")
 
-        audio_output = gr.Audio(label="合成音频", autoplay=True, streaming=True)
+        audio_output = gr.Audio(label="합성 오디오", autoplay=True, streaming=True)
 
         seed_button.click(generate_seed, inputs=[], outputs=seed)
         generate_button.click(generate_audio,
