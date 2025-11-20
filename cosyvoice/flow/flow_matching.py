@@ -12,8 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+import sys
 import torch
 import torch.nn.functional as F
+# Matcha-TTS 서브모듈 경로 추가 (matcha 모듈 import를 위해 필요)
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+MATCHA_TTS_PATH = os.path.join(ROOT_DIR, 'third_party', 'Matcha-TTS')
+if MATCHA_TTS_PATH not in sys.path:
+    sys.path.insert(0, MATCHA_TTS_PATH)
 from matcha.models.components.flow_matching import BASECFM
 from cosyvoice.utils.common import set_all_random_seed
 

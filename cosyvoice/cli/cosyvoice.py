@@ -12,12 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import sys
 import time
 from typing import Generator
 from tqdm import tqdm
 from hyperpyyaml import load_hyperpyyaml
 from modelscope import snapshot_download
 import torch
+# Matcha-TTS 서브모듈 경로 추가 (matcha 모듈 import를 위해 필요)
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+MATCHA_TTS_PATH = os.path.join(ROOT_DIR, 'third_party', 'Matcha-TTS')
+if MATCHA_TTS_PATH not in sys.path:
+    sys.path.insert(0, MATCHA_TTS_PATH)
 from cosyvoice.cli.frontend import CosyVoiceFrontEnd
 from cosyvoice.cli.model import CosyVoiceModel, CosyVoice2Model
 from cosyvoice.utils.file_utils import logging
