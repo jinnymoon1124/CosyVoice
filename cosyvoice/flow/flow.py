@@ -110,7 +110,11 @@ class MaskedDiffWithXvec(torch.nn.Module):
                   prompt_feat,
                   prompt_feat_len,
                   embedding,
-                  flow_cache):
+                  flow_cache,
+                  temperature=1.0,
+                  n_timesteps=10):
+        # temperature: 노이즈 스케일링 파라미터 (낮을수록 일관되고 자연스러움, 기본값 1.0)
+        # n_timesteps: 디퓨전 스텝 수 (높을수록 고품질이지만 느림, 기본값 10)
         assert token.shape[0] == 1
         # xvec projection
         embedding = F.normalize(embedding, dim=1)
@@ -139,7 +143,8 @@ class MaskedDiffWithXvec(torch.nn.Module):
             mask=mask.unsqueeze(1),
             spks=embedding,
             cond=conds,
-            n_timesteps=10,
+            n_timesteps=n_timesteps,
+            temperature=temperature,
             prompt_len=mel_len1,
             cache=flow_cache
         )
@@ -242,7 +247,11 @@ class CausalMaskedDiffWithXvec(torch.nn.Module):
                   prompt_feat_len,
                   embedding,
                   streaming,
-                  finalize):
+                  finalize,
+                  temperature=1.0,
+                  n_timesteps=10):
+        # temperature: 노이즈 스케일링 파라미터 (낮을수록 일관되고 자연스러움, 기본값 1.0)
+        # n_timesteps: 디퓨전 스텝 수 (높을수록 고품질이지만 느림, 기본값 10)
         assert token.shape[0] == 1
         # xvec projection
         embedding = F.normalize(embedding, dim=1)
@@ -273,7 +282,8 @@ class CausalMaskedDiffWithXvec(torch.nn.Module):
             mask=mask.unsqueeze(1),
             spks=embedding,
             cond=conds,
-            n_timesteps=10,
+            n_timesteps=n_timesteps,
+            temperature=temperature,
             streaming=streaming
         )
         feat = feat[:, :, mel_len1:]
